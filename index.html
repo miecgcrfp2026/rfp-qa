@@ -6,6 +6,27 @@
 <title>RFP 質問受付 / Q&A</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDYbgtzjV4TBhKQ_PO1fwm50N4OsWmbRao",
+    authDomain: "rfp-qa.firebaseapp.com",
+    projectId: "rfp-qa",
+    storageBucket: "rfp-qa.firebasestorage.app",
+    messagingSenderId: "783890792896",
+    appId: "1:783890792896:web:f1c7953f806ea906668825"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // ── Firestore ヘルパー（グローバルに公開）──
+  window._db = db;
+  window._fs = { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc, setDoc };
+</script>
 <style>
   :root {
     --bg: #F7F5F0;
@@ -1157,7 +1178,7 @@ HWが準備できた時点から48時間以内にバックアップからリス�
           <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
         </div>
         <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="adminLogin()">ログイン</button>
-        <p style="font-size:11px;color:var(--text-light);margin-top:12px;text-align:center;">パスワードを入力してください</p>
+
       </div>
     </div>
 
@@ -1217,6 +1238,67 @@ HWが準備できた時点から48時間以内にバックアップからリス�
 </div>
 
 <script>
+// =============================================
+// FIREBASE STORAGE
+// =============================================
+
+// ── 質問一覧（リアルタイム同期キャッシュ）──
+let _questionsCache = [];
+let _unsubscribe = null;
+
+function db() { return window._db; }
+function fs() { return window._fs; }
+
+/** Firestore のリアルタイムリスナーを起動（一度だけ） */
+function startListener() {
+  if (_unsubscribe) return;
+  const { collection, query, orderBy, onSnapshot } = fs();
+  const q = query(collection(db(), 'questions'), orderBy('createdAt', 'asc'));
+  _unsubscribe = onSnapshot(q, snap => {
+    _questionsCache = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+    // 表示中のページを再描画
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    const pid = activePage.id;
+    if (pid === 'page-qa')    renderQA();
+    if (pid === 'page-admin' && adminLoggedIn) renderAdmin();
+  }, err => {
+    console.error('Firestore listener error:', err);
+  });
+}
+
+/** 質問を追加 */
+async function addQuestion(q) {
+  const { collection, addDoc } = fs();
+  await addDoc(collection(db(), 'questions'), { ...q, createdAt: Date.now() });
+}
+
+/** 質問を更新 */
+async function updateQuestion(firestoreId, fields) {
+  const { doc, updateDoc } = fs();
+  await updateDoc(doc(db(), 'questions', firestoreId), fields);
+}
+
+/** 質問を削除 */
+async function removeQuestion(firestoreId) {
+  const { doc, deleteDoc } = fs();
+  await deleteDoc(doc(db(), 'questions', firestoreId));
+}
+
+/** パスワード取得 */
+async function getPassword() {
+  try {
+    const { doc, getDoc } = fs();
+    const snap = await getDoc(doc(db(), 'config', 'admin'));
+    return (snap.exists() && snap.data().password) ? snap.data().password : 'admin1234';
+  } catch(e) { return 'admin1234'; }
+}
+
+/** パスワード保存 */
+async function setPassword(pw) {
+  const { doc, setDoc } = fs();
+  await setDoc(doc(db(), 'config', 'admin'), { password: pw }, { merge: true });
+}
 
 // =============================================
 // NAVIGATION
@@ -1266,7 +1348,7 @@ function hideAlerts() {
   document.getElementById('form-alert-error').classList.remove('show');
 }
 
-function submitQuestion() {
+async function submitQuestion() {
   hideAlerts();
   const name = document.getElementById('q-name').value.trim();
   const body = document.getElementById('q-body').value.trim();
@@ -1285,25 +1367,33 @@ function submitQuestion() {
     return;
   }
 
-  const id = Date.now();
+  const btn = document.querySelector('[onclick="submitQuestion()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '送信中…'; }
+
   const now = new Date();
   const dateStr = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-')
                   + ' ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
 
-  data.questions.push({
-    id,
-    name,
-    category: category || null,
-    body,
-    answer: null,
-    published: false,
-    date: dateStr,
-    answerDate: null
-  });
-
-  clearForm();
-  document.getElementById('form-alert-success').classList.add('show');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  try {
+    await addQuestion({
+      name,
+      category: category || null,
+      body,
+      answer: null,
+      published: false,
+      date: dateStr,
+      answerDate: null
+    });
+    clearForm();
+    document.getElementById('form-alert-success').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch(e) {
+    document.getElementById('form-error-msg').textContent = '送信に失敗しました。再度お試しください。';
+    document.getElementById('form-alert-error').classList.add('show');
+    console.error(e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> 送信する'; }
+  }
 }
 
 // =============================================
@@ -1311,7 +1401,7 @@ function submitQuestion() {
 // =============================================
 function renderQA() {
   // 公開ページには「公開中 かつ 回答済み」のみ表示
-  const published = data.questions.filter(q => q.published && q.answer);
+  const published = _questionsCache.filter(q => q.published && q.answer);
 
   const categories = [...new Set(published.map(q => q.category).filter(Boolean))];
 
@@ -1364,19 +1454,28 @@ function filterQA(type, btn) {
 // =============================================
 // ADMIN
 // =============================================
-function adminLogin() {
+async function adminLogin() {
   const pw = document.getElementById('admin-pw').value;
-  const alert = document.getElementById('login-alert');
-  if (pw === getPassword()) {
-    adminLoggedIn = true;
-    document.getElementById('admin-pw').value = '';
-    alert.classList.remove('show');
-    document.getElementById('admin-login-panel').style.display = 'none';
-    document.getElementById('admin-main-panel').style.display = 'block';
-    renderAdmin();
-  } else {
-    alert.classList.add('show');
-    document.getElementById('admin-pw').focus();
+  const alertEl = document.getElementById('login-alert');
+  const btn = document.querySelector('#admin-login-panel .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = '確認中…'; }
+  try {
+    const stored = await getPassword();
+    if (pw === stored) {
+      adminLoggedIn = true;
+      document.getElementById('admin-pw').value = '';
+      alertEl.classList.remove('show');
+      document.getElementById('admin-login-panel').style.display = 'none';
+      document.getElementById('admin-main-panel').style.display = 'block';
+      renderAdmin();
+    } else {
+      alertEl.classList.add('show');
+      document.getElementById('admin-pw').focus();
+    }
+  } catch(e) {
+    alertEl.classList.add('show');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'ログイン'; }
   }
 }
 
@@ -1398,12 +1497,12 @@ const CATEGORIES = ['要件・仕様','技術','納期・スケジュール','�
 function renderAdmin() {
   const filter = document.getElementById('admin-filter').value;
 
-  let list = data.questions;
-  if (filter === 'pending') list = list.filter(q => !q.answer);
+  let list = _questionsCache.slice();
+  if (filter === 'pending')  list = list.filter(q => !q.answer);
   if (filter === 'answered') list = list.filter(q => !!q.answer);
 
   document.getElementById('admin-q-count').innerHTML =
-    `全 <strong>${data.questions.length}</strong> 件 / 未回答 <strong>${data.questions.filter(q=>!q.answer).length}</strong> 件`;
+    `全 <strong>${_questionsCache.length}</strong> 件 / 未回答 <strong>${_questionsCache.filter(q=>!q.answer).length}</strong> 件`;
 
   const container = document.getElementById('admin-list');
 
@@ -1417,37 +1516,37 @@ function renderAdmin() {
       `<option value="${escHtml(c)}" ${q.category===c?'selected':''}>${escHtml(c)}</option>`
     ).join('');
     return `
-    <div class="admin-item" id="item-${q.id}">
+    <div class="admin-item" id="item-${q.firestoreId}">
       <div class="admin-item-header">
         <div class="admin-item-header-left">
           <div class="admin-item-meta">#${String(i+1).padStart(3,'0')} &nbsp;·&nbsp; ${escHtml(q.date)}</div>
-          <div id="view-${q.id}">
+          <div id="view-${q.firestoreId}">
             <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${escHtml(q.name)}${q.category ? ' &nbsp;·&nbsp; ' + escHtml(q.category) : ''}</div>
             <div class="admin-item-question">${escHtml(q.body)}</div>
-            <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="toggleEditQ(${q.id})">
+            <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="toggleEditQ('${q.firestoreId}')">
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
               質問を編集
             </button>
           </div>
-          <div id="edit-${q.id}" style="display:none;margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);">
+          <div id="edit-${q.firestoreId}" style="display:none;margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);">
             <div style="display:flex;gap:8px;margin-bottom:8px;">
               <div style="flex:1;">
                 <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">質問者名</label>
-                <input type="text" id="eq-name-${q.id}" value="${escHtml(q.name)}" style="font-size:13px;padding:6px 10px;">
+                <input type="text" id="eq-name-${q.firestoreId}" value="${escHtml(q.name)}" style="font-size:13px;padding:6px 10px;">
               </div>
               <div style="width:160px;">
                 <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">カテゴリ</label>
-                <select id="eq-cat-${q.id}" style="font-size:13px;padding:6px 28px 6px 10px;">
+                <select id="eq-cat-${q.firestoreId}" style="font-size:13px;padding:6px 28px 6px 10px;">
                   <option value="">なし</option>
                   ${catOptions}
                 </select>
               </div>
             </div>
             <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">質問内容</label>
-            <textarea id="eq-body-${q.id}" rows="4" style="font-size:13px;min-height:80px;">${escHtml(q.body)}</textarea>
+            <textarea id="eq-body-${q.firestoreId}" rows="4" style="font-size:13px;min-height:80px;">${escHtml(q.body)}</textarea>
             <div style="display:flex;gap:6px;margin-top:8px;">
-              <button class="btn btn-success" style="font-size:12px;padding:5px 14px;" onclick="saveQuestion(${q.id})">保存</button>
-              <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="toggleEditQ(${q.id})">キャンセル</button>
+              <button class="btn btn-success" style="font-size:12px;padding:5px 14px;" onclick="saveQuestion('${q.firestoreId}')">保存</button>
+              <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="toggleEditQ('${q.firestoreId}')">キャンセル</button>
             </div>
           </div>
         </div>
@@ -1459,13 +1558,13 @@ function renderAdmin() {
       <div class="admin-answer-area ${q.answer ? 'has-answer' : ''}">
         ${q.answer ? `<div class="existing-answer">${escHtml(q.answer)}</div>` : ''}
         <div class="answer-form-row">
-          <textarea id="ans-${q.id}" placeholder="回答を入力…" rows="3">${q.answer ? escHtml(q.answer) : ''}</textarea>
+          <textarea id="ans-${q.firestoreId}" placeholder="回答を入力…" rows="3">${q.answer ? escHtml(q.answer) : ''}</textarea>
           <div class="answer-actions">
-            <button class="btn btn-success" onclick="saveAnswer(${q.id})">保存</button>
+            <button class="btn btn-success" onclick="saveAnswer('${q.firestoreId}')">保存</button>
             ${q.answer
-              ? `<button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="togglePublish(${q.id})">${q.published ? '非公開に' : '公開する'}</button>`
+              ? `<button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="togglePublish('${q.firestoreId}')">${q.published ? '非公開に' : '公開する'}</button>`
               : ''}
-            <button class="btn btn-danger" onclick="deleteQuestion(${q.id})">削除</button>
+            <button class="btn btn-danger" onclick="deleteQuestion('${q.firestoreId}')">削除</button>
           </div>
         </div>
       </div>
@@ -1482,61 +1581,56 @@ function toggleEditQ(id) {
   if (!isEditing) document.getElementById('eq-body-' + id).focus();
 }
 
-function saveQuestion(id) {
-  const name = document.getElementById('eq-name-' + id).value.trim();
-  const cat  = document.getElementById('eq-cat-'  + id).value;
-  const body = document.getElementById('eq-body-' + id).value.trim();
+async function saveQuestion(firestoreId) {
+  const name = document.getElementById('eq-name-' + firestoreId).value.trim();
+  const cat  = document.getElementById('eq-cat-'  + firestoreId).value;
+  const body = document.getElementById('eq-body-' + firestoreId).value.trim();
   if (!name || !body) { showToast('質問者名と質問内容は必須です'); return; }
-  const q = data.questions.find(x => x.id === id);
-  if (!q) return;
-  q.name = name;
-  q.category = cat || null;
-  q.body = body;
-  renderAdmin();
-  showToast('質問内容を更新しました');
+  try {
+    await updateQuestion(firestoreId, { name, category: cat || null, body });
+    showToast('質問内容を更新しました');
+  } catch(e) { showToast('更新に失敗しました'); console.error(e); }
 }
 
-function saveAnswer(id) {
-  const ansEl = document.getElementById('ans-' + id);
+async function saveAnswer(firestoreId) {
+  const ansEl = document.getElementById('ans-' + firestoreId);
   const ans = ansEl ? ansEl.value.trim() : '';
   if (!ans) { showToast('回答を入力してください'); return; }
-
-  const q = data.questions.find(x => x.id === id);
-  if (!q) return;
-
   const now = new Date();
-  q.answer = ans;
-  q.answerDate = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-')
-                  + ' ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
-
-  renderAdmin();
-  showToast('回答を保存しました');
+  const answerDate = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-')
+                   + ' ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
+  try {
+    await updateQuestion(firestoreId, { answer: ans, answerDate });
+    showToast('回答を保存しました');
+  } catch(e) { showToast('保存に失敗しました'); console.error(e); }
 }
 
-function togglePublish(id) {
-  const q = data.questions.find(x => x.id === id);
+async function togglePublish(firestoreId) {
+  const q = _questionsCache.find(x => x.firestoreId === firestoreId);
   if (!q) return;
-  q.published = !q.published;
-  renderAdmin();
-  showToast(q.published ? 'Q&Aに公開しました' : '非公開にしました');
+  try {
+    await updateQuestion(firestoreId, { published: !q.published });
+    showToast(!q.published ? 'Q&Aに公開しました' : '非公開にしました');
+  } catch(e) { showToast('更新に失敗しました'); console.error(e); }
 }
 
-function deleteQuestion(id) {
+async function deleteQuestion(firestoreId) {
   if (!confirm('この質問を削除しますか？')) return;
-  data.questions = data.questions.filter(x => x.id !== id);
-  renderAdmin();
-  showToast('削除しました');
+  try {
+    await removeQuestion(firestoreId);
+    showToast('削除しました');
+  } catch(e) { showToast('削除に失敗しました'); console.error(e); }
 }
 
-function changePassword() {
+async function changePassword() {
   const cur = document.getElementById('pw-current').value;
   const nw = document.getElementById('pw-new').value;
   const conf = document.getElementById('pw-confirm').value;
   const alertEl = document.getElementById('pw-alert');
-
   alertEl.className = 'alert';
 
-  if (cur !== getPassword()) {
+  const stored = await getPassword();
+  if (cur !== stored) {
     alertEl.className = 'alert alert-danger show';
     alertEl.textContent = '現在のパスワードが違います。';
     return;
@@ -1551,13 +1645,17 @@ function changePassword() {
     alertEl.textContent = 'パスワードが一致しません。';
     return;
   }
-
-  setPassword(nw);
-  document.getElementById('pw-current').value = '';
-  document.getElementById('pw-new').value = '';
-  document.getElementById('pw-confirm').value = '';
-  alertEl.className = 'alert alert-success show';
-  alertEl.textContent = 'パスワードを変更しました。';
+  try {
+    await setPassword(nw);
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+    alertEl.className = 'alert alert-success show';
+    alertEl.textContent = 'パスワードを変更しました。';
+  } catch(e) {
+    alertEl.className = 'alert alert-danger show';
+    alertEl.textContent = '変更に失敗しました。';
+  }
 }
 
 // =============================================
@@ -1650,106 +1748,17 @@ function openRfpSection(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Firebase初期化完了を待ってリスナー起動
+  const waitForFirebase = setInterval(() => {
+    if (window._db && window._fs) {
+      clearInterval(waitForFirebase);
+      startListener();
+    }
+  }, 50);
   renderVMTable(VM_DATA);
   if (location.hash === '#qa') showPage('qa');
 });
 
-</script>
-  <script type="module">
-// Firebase読み込み
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-
-// あなたの設定
-const firebaseConfig = {
-  apiKey: "AIzaSyDYbgtzjV4TBhKQ_PO1fwm50N4OsWmbRao",
-  authDomain: "rfp-qa.firebaseapp.com",
-  projectId: "rfp-qa",
-  storageBucket: "rfp-qa.firebasestorage.app",
-  messagingSenderId: "783890792896",
-  appId: "1:783890792896:web:f1c7953f806ea906668825"
-};
-
-// 初期化
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// ==========================
-// 質問登録
-// ==========================
-window.submitQuestion = async function () {
-  const name = document.getElementById('q-name').value.trim();
-  const body = document.getElementById('q-body').value.trim();
-  const category = document.getElementById('q-category').value;
-
-  if (!name || !body) {
-    alert("入力してください");
-    return;
-  }
-
-  await addDoc(collection(db, "questions"), {
-    name,
-    body,
-    category,
-    answer: "",
-    status: "pending",
-    createdAt: new Date().toISOString()
-  });
-
-  alert("送信完了");
-  loadQuestions();
-};
-
-// ==========================
-// 一覧取得
-// ==========================
-async function loadQuestions() {
-  const snapshot = await getDocs(collection(db, "questions"));
-  const list = [];
-
-  snapshot.forEach(docSnap => {
-    list.push({ id: docSnap.id, ...docSnap.data() });
-  });
-
-  renderQA(list);
-}
-
-// ==========================
-// 回答保存（管理用）
-// ==========================
-window.saveAnswer = async function (id) {
-  const answer = document.getElementById("answer-" + id).value;
-
-  await updateDoc(doc(db, "questions", id), {
-    answer: answer,
-    status: "answered"
-  });
-
-  alert("保存しました");
-  loadQuestions();
-};
-
-// ==========================
-// 表示（既存関数流用）
-// ==========================
-window.renderQA = function(list){
-  const el = document.getElementById("qa-list");
-  el.innerHTML = "";
-
-  list.forEach(q => {
-    el.innerHTML += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <b>${q.category}</b><br>
-        ${q.body}<br><br>
-        <textarea id="answer-${q.id}" placeholder="回答">${q.answer || ""}</textarea><br>
-        <button onclick="saveAnswer('${q.id}')">保存</button>
-      </div>
-    `;
-  });
-};
-
-// 初回読み込み
-loadQuestions();
 </script>
 </body>
 </html>
