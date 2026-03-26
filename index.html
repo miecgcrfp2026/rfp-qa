@@ -1691,5 +1691,101 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
+  <script type="module">
+// Firebase読み込み
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// あなたの設定
+const firebaseConfig = {
+  apiKey: "AIzaSyDYbgtzjV4TBhKQ_PO1fwm50N4OsWmbRao",
+  authDomain: "rfp-qa.firebaseapp.com",
+  projectId: "rfp-qa",
+  storageBucket: "rfp-qa.firebasestorage.app",
+  messagingSenderId: "783890792896",
+  appId: "1:783890792896:web:f1c7953f806ea906668825"
+};
+
+// 初期化
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ==========================
+// 質問登録
+// ==========================
+window.submitQuestion = async function () {
+  const name = document.getElementById('q-name').value.trim();
+  const body = document.getElementById('q-body').value.trim();
+  const category = document.getElementById('q-category').value;
+
+  if (!name || !body) {
+    alert("入力してください");
+    return;
+  }
+
+  await addDoc(collection(db, "questions"), {
+    name,
+    body,
+    category,
+    answer: "",
+    status: "pending",
+    createdAt: new Date().toISOString()
+  });
+
+  alert("送信完了");
+  loadQuestions();
+};
+
+// ==========================
+// 一覧取得
+// ==========================
+async function loadQuestions() {
+  const snapshot = await getDocs(collection(db, "questions"));
+  const list = [];
+
+  snapshot.forEach(docSnap => {
+    list.push({ id: docSnap.id, ...docSnap.data() });
+  });
+
+  renderQA(list);
+}
+
+// ==========================
+// 回答保存（管理用）
+// ==========================
+window.saveAnswer = async function (id) {
+  const answer = document.getElementById("answer-" + id).value;
+
+  await updateDoc(doc(db, "questions", id), {
+    answer: answer,
+    status: "answered"
+  });
+
+  alert("保存しました");
+  loadQuestions();
+};
+
+// ==========================
+// 表示（既存関数流用）
+// ==========================
+window.renderQA = function(list){
+  const el = document.getElementById("qa-list");
+  el.innerHTML = "";
+
+  list.forEach(q => {
+    el.innerHTML += `
+      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+        <b>${q.category}</b><br>
+        ${q.body}<br><br>
+        <textarea id="answer-${q.id}" placeholder="回答">${q.answer || ""}</textarea><br>
+        <button onclick="saveAnswer('${q.id}')">保存</button>
+      </div>
+    `;
+  });
+};
+
+// 初回読み込み
+loadQuestions();
+</script>
 </body>
 </html>
