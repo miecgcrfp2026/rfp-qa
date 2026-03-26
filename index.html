@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RFP 質問受付 / Q&A</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface2: #F0EDE6;
+    --border: #DDD9D0;
+    --border-dark: #B8B3AA;
+    --text: #1A1814;
+    --text-muted: #6B6760;
+    --text-light: #9B9790;
+    --accent: #1A3A5C;
+    --accent-light: #E8EEF5;
+    --accent-hover: #0F2740;
+    --success: #1E5C3A;
+    --success-bg: #E8F5EE;
+    --warning: #7A4A00;
+    --warning-bg: #FFF5E0;
+    --danger: #7A1A1A;
+    --danger-bg: #FFF0F0;
+    --tag-bg: #EAE7E0;
+    --radius: 4px;
+    --radius-lg: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ===== LAYOUT ===== */
+  .header {
+    background: var(--accent);
+    color: #fff;
+    padding: 0 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 2px solid #0A2030;
+  }
+
+  .header-title {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.9;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.25);
+    color: rgba(255,255,255,0.8);
+    padding: 5px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    font-weight: 400;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .nav-btn:hover { background: rgba(255,255,255,0.12); color: #fff; border-color: rgba(255,255,255,0.5); }
+  .nav-btn.active { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.6); }
+
+  .container { max-width: 820px; margin: 0 auto; padding: 40px 24px; }
+
+  /* ===== PAGES ===== */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== PAGE HEADING ===== */
+  .page-heading {
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .page-heading h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+  }
+
+  .page-heading p {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  /* ===== FORM ===== */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+  }
+
+  .form-group { margin-bottom: 22px; }
+
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .form-label .required {
+    color: var(--danger);
+    margin-left: 4px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-dark);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    appearance: none;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(26, 58, 92, 0.1);
+  }
+
+  textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+
+  select { background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236B6760'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  .char-count {
+    text-align: right;
+    font-size: 11px;
+    color: var(--text-light);
+    margin-top: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .form-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 5px;
+    font-weight: 300;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-dark);
+  }
+
+  .btn-secondary:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .btn-danger:hover { background: var(--danger-bg); }
+
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 14px;
+  }
+
+  .btn-success:hover { opacity: 0.9; }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ===== ALERTS ===== */
+  .alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    margin-bottom: 20px;
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.5;
+  }
+
+  .alert.show { display: flex; }
+  .alert-success { background: var(--success-bg); color: var(--success); border: 1px solid #A8D5BE; }
+  .alert-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid #F0AAAA; }
+  .alert-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid #F5C060; }
+
+  /* ===== Q&A LIST (Public) ===== */
+  .qa-stats {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .stat-pill strong {
+    font-weight: 500;
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+  }
+
+  .qa-empty {
+    background: var(--surface);
+    border: 1px dashed var(--border-dark);
+    border-radius: var(--radius-lg);
+    padding: 48px 32px;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .qa-empty p { font-size: 13px; }
+
+  .qa-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .qa-question {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .qa-q-label {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 1px;
+  }
+
+  .qa-a-label {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: var(--success);
+    color: #fff;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+    margin-top: 1px;
+  }
+
+  .qa-q-body { flex: 1; }
+  .qa-q-text { font-size: 14px; color: var(--text); font-weight: 400; white-space: pre-wrap; }
+  .qa-q-meta { font-size: 11px; color: var(--text-light); margin-top: 5px; font-family: 'IBM Plex Mono', monospace; }
+
+  .qa-answer {
+    padding: 18px 24px;
+    background: var(--success-bg);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .qa-a-text { font-size: 14px; color: var(--success); white-space: pre-wrap; flex: 1; }
+
+  .qa-no-answer {
+    padding: 14px 24px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-light);
+    flex-shrink: 0;
+  }
+
+  .status-dot.pending { background: #E09000; }
+  .qa-no-answer span { font-size: 12px; color: var(--text-light); }
+
+  .qa-number {
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-light);
+    font-weight: 400;
+  }
+
+  /* ===== ADMIN ===== */
+  .admin-login {
+    max-width: 380px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 36px 32px;
+  }
+
+  .admin-login h2 {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+  }
+
+  .admin-login p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+  }
+
+  .admin-panel {}
+
+  .admin-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+
+  .admin-count {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  .admin-count strong { color: var(--text); font-weight: 500; }
+
+  .admin-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .admin-item-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .admin-item-header-left { flex: 1; }
+
+  .admin-item-meta {
+    font-size: 11px;
+    color: var(--text-light);
+    font-family: 'IBM Plex Mono', monospace;
+    margin-bottom: 6px;
+  }
+
+  .admin-item-question {
+    font-size: 13px;
+    color: var(--text);
+    white-space: pre-wrap;
+    font-weight: 400;
+  }
+
+  .status-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  .badge-pending {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid #F5C060;
+  }
+
+  .badge-answered {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid #A8D5BE;
+  }
+
+  .badge-hidden {
+    background: var(--tag-bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border-dark);
+  }
+
+  .admin-answer-area {
+    padding: 16px 20px;
+  }
+
+  .admin-answer-area.has-answer {
+    background: var(--success-bg);
+  }
+
+  .existing-answer {
+    font-size: 13px;
+    color: var(--success);
+    white-space: pre-wrap;
+    margin-bottom: 12px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.6);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--success);
+  }
+
+  .answer-form-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  .answer-form-row textarea {
+    flex: 1;
+    min-height: 72px;
+    font-size: 13px;
+  }
+
+  .answer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .admin-tab-bar {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 24px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 3px;
+    width: fit-content;
+  }
+
+  .admin-tab {
+    padding: 6px 16px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 400;
+    transition: all 0.12s;
+  }
+
+  .admin-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .filter-row { display: flex; gap: 8px; }
+  .filter-row select { width: auto; flex-shrink: 0; font-size: 12px; padding: 7px 30px 7px 10px; }
+
+  /* ===== FILTER TABS ===== */
+  .filter-tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    padding: 5px 14px;
+    border-radius: 100px;
+    border: 1px solid var(--border-dark);
+    background: var(--surface);
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.12s;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  .filter-chip:hover { background: var(--surface2); }
+  .filter-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  /* ===== TOAST ===== */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    background: var(--text);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.25s;
+    z-index: 999;
+    pointer-events: none;
+    max-width: 320px;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+
+  /* ===== DIVIDER ===== */
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 600px) {
+    .header { padding: 0 16px; }
+    .container { padding: 24px 16px; }
+    .form-card { padding: 20px; }
+    .header-title { display: none; }
+    .answer-form-row { flex-direction: column; }
+    .answer-actions { flex-direction: row; }
+  }
+
+  /* ===== RFP PAGE ===== */
+  .rfp-toc { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
+  .rfp-toc a { font-size: 12px; color: var(--accent); text-decoration: none; background: var(--accent-light); border: 1px solid #C5D5E8; border-radius: 100px; padding: 4px 14px; transition: all 0.12s; }
+  .rfp-toc a:hover { background: var(--accent); color: #fff; }
+  .rfp-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 16px; overflow: hidden; }
+  .rfp-section-header { padding: 14px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; }
+  .rfp-section-header:hover { background: var(--surface2); }
+  .rfp-section-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .rfp-section-num { font-size: 11px; font-family: 'IBM Plex Mono', monospace; color: var(--text-light); margin-right: 8px; }
+  .rfp-chevron { transition: transform 0.2s; color: var(--text-light); }
+  .rfp-chevron.open { transform: rotate(180deg); }
+  .rfp-section-body { display: none; padding: 0 20px 20px; border-top: 1px solid var(--border); }
+  .rfp-section-body.open { display: block; }
+  .rfp-body-text { font-size: 13px; color: var(--text); line-height: 1.8; white-space: pre-wrap; }
+  .rfp-highlight { background: #FFF8C5; border-radius: 2px; padding: 0 2px; }
+  .rfp-info-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .rfp-info-pill { font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 4px 10px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+  .rfp-info-pill strong { color: var(--text); }
+  .vm-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .vm-table th { background: var(--surface2); color: var(--text-muted); font-weight: 500; font-size: 11px; letter-spacing: 0.05em; padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .vm-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+  .vm-table tr:last-child td { border-bottom: none; }
+  .vm-table tr:hover td { background: var(--surface2); }
+  .vm-table .flag-yes { color: var(--danger); font-weight: 500; }
+  .vm-table .flag-no { color: var(--text-light); }
+  .vm-table .sys-info { background: #EEF4FB; }
+  .vm-table .sys-doc { background: #F4F8EE; }
+  .search-bar { position: relative; margin-bottom: 20px; }
+  .search-bar input { padding-left: 36px; }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-light); pointer-events: none; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <span class="header-title">RFP 質問管理システム</span>
+  <nav class="header-nav">
+    <button class="nav-btn active" onclick="showPage('form')">質問投稿</button>
+    <button class="nav-btn" onclick="showPage('rfp')">RFP参照</button>
+    <button class="nav-btn" onclick="showPage('qa')">Q&amp;A公開</button>
+    <button class="nav-btn" onclick="showPage('admin')">管理者</button>
+  </nav>
+</header>
+
+<div id="toast"></div>
+
+<!-- ============================================================
+     PAGE: QUESTION FORM
+     ============================================================ -->
+<div id="page-form" class="page active">
+  <div class="container">
+    <div class="page-heading">
+      <h1>質問を送る</h1>
+      <p>RFPに関するご質問をお送りください。回答後、Q&amp;Aページで公開されます。</p>
+    </div>
+
+    <div id="form-alert-success" class="alert alert-success">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div>質問を受け付けました。回答までしばらくお待ちください。</div>
+    </div>
+
+    <div id="form-alert-error" class="alert alert-danger">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <div id="form-error-msg">入力内容を確認してください。</div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-group">
+        <label class="form-label">質問者名（会社名）<span class="required">*</span></label>
+        <input type="text" id="q-name" placeholder="例：株式会社〇〇" maxlength="100" oninput="updateCount('q-name','q-name-count',100)">
+        <div class="char-count"><span id="q-name-count">0</span>/100</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">カテゴリ</label>
+        <select id="q-category">
+          <option value="">選択してください（任意）</option>
+          <option value="要件・仕様">要件・仕様</option>
+          <option value="技術">技術</option>
+          <option value="納期・スケジュール">納期・スケジュール</option>
+          <option value="費用・契約">費用・契約</option>
+          <option value="評価基準">評価基準</option>
+          <option value="その他">その他</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">質問内容<span class="required">*</span></label>
+        <textarea id="q-body" placeholder="質問内容を詳しくご記入ください" maxlength="2000" oninput="updateCount('q-body','q-body-count',2000)"></textarea>
+        <div class="char-count"><span id="q-body-count">0</span>/2000</div>
+      </div>
+
+      <div class="form-hint" style="margin-top: -10px; margin-bottom: 12px;">
+        ※ 質問内容はQ&amp;Aとして公開されます。社外秘情報は含めないでください。
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-secondary" onclick="clearForm()">クリア</button>
+        <button class="btn btn-primary" onclick="submitQuestion()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          送信する
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: RFP REFERENCE
+     ============================================================ -->
+<div id="page-rfp" class="page">
+  <div class="container">
+    <div class="page-heading">
+      <h1>RFP 参照</h1>
+      <p>次期基幹系協会システム仮想化基盤・移行業務 提案依頼書（第1版 2026-03-22）　発行：三重県信用保証協会 総務部情報システム課</p>
+    </div>
+
+    <!-- Info Pills -->
+    <div class="rfp-info-row">
+      <span class="rfp-info-pill"><strong>提案提出期限</strong> 2026-04-17</span>
+      <span class="rfp-info-pill"><strong>質疑受付期限</strong> 2026-04-10</span>
+      <span class="rfp-info-pill"><strong>回答期限</strong> 2026-04-14</span>
+      <span class="rfp-info-pill"><strong>選定結果通知</strong> 2026-04-24頃</span>
+      <span class="rfp-info-pill"><strong>本番移行目標</strong> 2026年12月</span>
+      <span class="rfp-info-pill"><strong>移設完了目標</strong> 2027年5月</span>
+    </div>
+
+    <!-- TOC -->
+    <div class="rfp-toc">
+      <a href="#" onclick="openRfpSection('s0');return false;">0. 位置づけ</a>
+      <a href="#" onclick="openRfpSection('s1');return false;">1. 背景・目的</a>
+      <a href="#" onclick="openRfpSection('s2');return false;">2. スコープ</a>
+      <a href="#" onclick="openRfpSection('s3');return false;">3. スケジュール</a>
+      <a href="#" onclick="openRfpSection('s4');return false;">4. 現行環境</a>
+      <a href="#" onclick="openRfpSection('s5');return false;">5. RTO/RPO</a>
+      <a href="#" onclick="openRfpSection('s6');return false;">6. 移行方式</a>
+      <a href="#" onclick="openRfpSection('s7');return false;">7. 設置・移設</a>
+      <a href="#" onclick="openRfpSection('s8');return false;">8. バックアップ・BCP</a>
+      <a href="#" onclick="openRfpSection('s9');return false;">9. 仮想化基盤要求</a>
+      <a href="#" onclick="openRfpSection('s10');return false;">10. サイジング</a>
+      <a href="#" onclick="openRfpSection('s11');return false;">11. 成果物</a>
+      <a href="#" onclick="openRfpSection('s12');return false;">12. 提出要領</a>
+      <a href="#" onclick="openRfpSection('s13');return false;">13. 評価観点</a>
+      <a href="#" onclick="openRfpSection('svm');return false;">別紙 VM一覧</a>
+    </div>
+
+    <!-- Sections -->
+    <div class="rfp-section" id="sec-s0">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s0')">
+        <span><span class="rfp-section-num">0</span><span class="rfp-section-title">本書の位置づけ</span></span>
+        <svg class="rfp-chevron" id="chv-s0" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s0">
+        <div class="rfp-body-text" style="margin-top:16px;">本書は、当協会の基幹系協会システム（サーバ仮想化基盤および一部のオンプレミス）の更改および現行システムの移行に関する提案依頼書（RFP）である。提案者は、本書に示す前提条件および要求事項を満たす提案を行うこと。
+
+※「VM」は「仮想マシン（Virtual Machine）」を指す。特定製品名（VMware等）を指すものではない。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s1">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s1')">
+        <span><span class="rfp-section-num">1</span><span class="rfp-section-title">背景・目的</span></span>
+        <svg class="rfp-chevron" id="chv-s1" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s1">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>1.1 背景</strong>
+・基幹系サーバ群は一部（NAS・バックアップ等）を除き現行 VMware 基盤上で稼働。
+・次期更改ではライセンス・提供形態の変動リスクを踏まえ、特定ベンダーに過度に依存しない仮想化基盤を採用したい。
+・システム更改（2026年12月）後、本店新ビルへの移設（2027年2月末〜5月）までを含めて安定稼働を確保する。
+・インターネット非接続の閉域性を確保し、外部ネットワークと完全に切り離した独立性を維持（インターネット VPN は不可）。
+
+<strong>1.2 目的</strong>
+・現行基幹系 VM のアプリケーションおよびデータを原則維持（Lift &amp; Shift 中心）し、次期仮想化基盤へ移行する。
+・運用利便性・拡張性・将来性を重視し、複数方式を同一評価軸で比較可能な提案を求める。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s2">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s2')">
+        <span><span class="rfp-section-num">2</span><span class="rfp-section-title">スコープ</span></span>
+        <svg class="rfp-chevron" id="chv-s2" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s2">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>2.1 調達範囲</strong>
+・仮想化基盤（HW／仮想化SW／統合管理機能）
+・移行（設計・作業・リハーサル・本番切替）
+・OS バージョンアップ対応（対象 VM のみ）
+・運用設計（監視・バックアップ・障害対応・資源管理・権限管理・更新管理）
+・ドキュメント整備、教育、引継ぎ
+・更改後の移設（現本店→新本店）計画・実施・再試験
+・現行環境の撤去・データ消去
+
+<strong>2.2 更改後の移設（主要要件）</strong>
+・現本店：三重県津市桜橋3丁目399番地（マシンルーム：6階、EV利用可、養生必要）
+・新本店：三重県津市丸之内19-16（マシンルーム：5階、EV利用可、養生必要）
+・引渡し（施主検査完了）：2027年2月19日（予定）
+・回線開通：2027年2月23日（予定）
+・システムセンター回線切替：2027年5月上旬（予定）
+
+<strong>2.3 現行環境のデータ消去</strong>
+対象機器：
+・VMware基盤：2ホスト＋共用DAS 1台×2セット（情報系／文書系）
+・バックアップサーバ（オンプレミス）：2セット
+・WSUSサーバ：1台
+・移動プロファイル＆フォルダリダイレクト用NAS：1台
+
+方式：物理破壊は不可（リース品含む）。消去証明書等の証跡提出が必要。
+成果物：消去対象一覧 / 消去方式説明 / 消去実施報告書 / 消去証明書</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s3">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s3')">
+        <span><span class="rfp-section-num">3</span><span class="rfp-section-title">更改・移設スケジュール</span></span>
+        <svg class="rfp-chevron" id="chv-s3" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s3">
+        <div class="rfp-body-text" style="margin-top:16px;">・<span class="rfp-highlight">本番移行（切替）目標：2026年12月</span>（任意の休日を利用して切替）
+・移行方式：VM・業務単位での段階的移行を可能とする。
+・旧環境の保持：切替後1か月以降のタイミングで協議のうえ、切戻し不要と判断できるまで保持。
+・引渡し（施主検査完了）：2027年2月19日（予定）
+・回線開通：2027年2月23日（予定）
+・<span class="rfp-highlight">システムセンター回線切替：2027年5月上旬（予定）</span></div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s4">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s4')">
+        <span><span class="rfp-section-num">4</span><span class="rfp-section-title">現行環境の概要</span></span>
+        <svg class="rfp-chevron" id="chv-s4" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s4">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>4.1 移行対象VM</strong>　→ 別紙「VM一覧」タブを参照。
+
+<strong>4.2 OSバージョンアップ対象</strong>
+対象：V94W9AD1 / V94W9AD2 / V81W3F80 / V94W9SBZ / V12W9SKY / V11W9ZIM / V94W9INK
+
+・ADサーバ（AD1/2）：新規OSでVM構築→DCに昇格→FSMO役割移行方式を原則とする。
+・生体認証（V81W3F80）：各ベンダー提案に委ねる（刷新／継承の方式・スケジュール・リスク・停止時間・ロールバックを明示）。
+・先行実施：現行VMware環境を利用して業務影響なく先行実施可能。可否・対象・手順・リスク・切戻し手順を提示すること。
+・例外：業務アプリがOSバージョンアップに対応していない場合は当協会と協議のうえ対応方針を決定。
+
+<strong>4.3 移動プロファイル＆フォルダリダイレクト（現NAS）</strong>
+・業務端末：Windows 11 Pro 約100台 ／ 利用ユーザ約100名
+・次期方針：性能影響がないことを前提にVM化を検討。性能要件を満たせない場合はNASとして新規導入。
+・容量目安：有効容量5TB程度（現状占有 約2.91TB）</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s5">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s5')">
+        <span><span class="rfp-section-num">5</span><span class="rfp-section-title">停止許容（RTO/RPO）</span></span>
+        <svg class="rfp-chevron" id="chv-s5" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s5">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>基幹系全体目安：RTO 8時間</strong>
+
+VM別のRTO/RPOは別紙「VM一覧」を参照。
+提案者は当該RTO/RPOを満たす移行計画およびバックアップ／復旧方式を提示すること。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s6">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s6')">
+        <span><span class="rfp-section-num">6</span><span class="rfp-section-title">移行方式の制約・要件</span></span>
+        <svg class="rfp-chevron" id="chv-s6" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s6">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>6.1 移行方式</strong>
+・VM・業務単位での段階的移行を可能とする（切替は休日を基本）。
+・移行後のVM構成は現行踏襲でよい。複数VMの集約（統合）も可（影響評価・利点・リスクを明示）。
+
+<strong>6.2 移行計画の調整</strong>
+・ハードウェア納期不確実性に対応するため、定例会等で当協会と協議しつつ計画を柔軟に調整できる運用を提案すること。
+
+<strong>6.3 旧環境保持とロールバック</strong>
+・切替後1か月以降のタイミングで協議のうえ、切戻し不要と判断できるまで旧環境を保持。
+・ロールバック条件・切戻し手順・復旧時間・データ整合性方針を明示すること。
+
+<strong>6.4 平日停止不可 VM</strong>
+・AD（V94W9AD1/2）
+・生体認証（V81W3F80）
+・共有サーバ（V21W9KYO）
+・電算共有（T834）
+・サイボウズ（V94W9SBZ）
+・移動プロファイル＆フォルダリダイレクト
+
+<strong>6.5 移行リハーサルおよびテスト要件</strong>
+リハーサル対象（最低1回）：
+・AD（V94W9AD1/2）
+・生体認証（V81W3F80）
+・移動プロファイル＆フォルダリダイレクト
+・共有サーバ（V21W9KYO）
+・RPA UiPath（V25ROBO1/3, VMROBO05/06）
+
+特記：UiPath は画面解像度・描画方式の変更によりUI要素認識に影響が生じるリスクがある。動作互換性（解像度・UI認識等）の確認テストを計画に含めること。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s7">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s7')">
+        <span><span class="rfp-section-num">7</span><span class="rfp-section-title">設置場所・移設要件</span></span>
+        <svg class="rfp-chevron" id="chv-s7" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s7">
+        <div class="rfp-body-text" style="margin-top:16px;">・移設に伴う停止有無・搬入設置手順・リスク・再試験計画を提示すること。
+・移設期間中：新旧本店間をネットワーク接続し、データ同期や段階的移行・移設を実施できる環境を前提に提案すること。
+　→ 回線開通予定：2027年2月23日</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s8">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s8')">
+        <span><span class="rfp-section-num">8</span><span class="rfp-section-title">バックアップ・BCP</span></span>
+        <svg class="rfp-chevron" id="chv-s8" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s8">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>8.1 方針</strong>
+四日市支店へバックアップを退避し、災害時にHWが準備できた段階でリストアにより復旧できることを要求する。
+
+<strong>8.2 ファイル単位保持</strong>
+・対象：共有フォルダ／電算共有／移動プロファイル＆フォルダリダイレクト
+・6時・12時のシャドウコピー等によりファイル単位保持。世代数目安：最低100世代。
+
+<strong>8.3 退避（本店→四日市）</strong>
+・週次でD to D（本店バックアップ）to D（四日市支店バックアップ）へ退避。
+・保持期間目安：週次で2年分程度。
+
+<strong>8.4 <span class="rfp-highlight">災害時復旧（48時間以内）</span></strong>
+HWが準備できた時点から48時間以内にバックアップからリストアして以下を再開できること：
+・ADサーバ（V94W9AD1/2）
+・生体認証（V81W3F80）
+・共有サーバ（V21W9KYO）
+・電算共有（T834）
+・サイボウズ（V94W9SBZ）
+・移動プロファイル＆フォルダリダイレクト</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s9">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s9')">
+        <span><span class="rfp-section-num">9</span><span class="rfp-section-title">仮想化基盤の要求</span></span>
+        <svg class="rfp-chevron" id="chv-s9" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s9">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>(1) 運用利便性</strong>
+・統合管理（資源監視・アラート・容量性能分析・VM運用・権限管理）
+・更新管理（パッチ／ファーム更新の手順化、影響範囲可視化、ローリング更新等）
+・ネットワーク要件：現行VLAN構成を原則踏襲。改善案は併記可。
+・VM運用の迅速性：追加・削除・CPU/メモリ変更・ディスク割当拡張が容易かつ迅速に実施できること（手順・所要時間目安を提示）。
+・スナップショット／クローニング：取得・復元・複製が容易かつ迅速に実施できること。
+・Windows Update管理（任意）：閉域網での配布・適用管理方式（WSUS後継含む）を提案に入れること。
+
+<strong>(2) 拡張性</strong>
+・増設単位（ノード追加／クラスタ拡張／ストレージ拡張）と影響（停止要否・作業時間）を明示。
+
+<strong>(3) 可用性</strong>
+・障害時の継続方式（冗長化・フェイルオーバ）
+・メンテナンス時の停止最小化
+
+<strong>(4) セキュリティ・運用管理（閉域網対応）</strong>
+・閉域網環境での運用・管理が可能であること（更新・監視・障害対応を含む）。
+・ウイルス対策：全サーバに導入、パターンファイルは最低週1回更新。閉域網での更新配布方法を含めて提案。
+・外部ネットワークと完全に切り離した閉域性を確保（専用線／広域イーサネット／IP-VPN等。インターネットVPN不可）。
+・管理操作の権限制御・監査性を担保（誰が・いつ・何をしたか）。
+・操作ログ等の保管：管理操作・主要イベントのログを少なくとも1年間保管。
+・外部接続（監視回線等）が必要な場合は、保証協会システムセンターの承認が必要となり得ることを踏まえ、構成案・手続き案を提示。
+
+<strong>(5) 将来性</strong>
+・次回更改時「同方式でのHW更改」および「クラウド移行」を見据え、データ/VMの持ち出し方法、主要制約、移行手順の概要・工数の考え方を記載すること。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s10">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s10')">
+        <span><span class="rfp-section-num">10</span><span class="rfp-section-title">サイジング要件</span></span>
+        <svg class="rfp-chevron" id="chv-s10" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s10">
+        <div class="rfp-body-text" style="margin-top:16px;">・当協会が取得したリソース収集レポートを提示する。
+・提案者は当該データを踏まえ、性能余裕・冗長化・将来増分を含むサイジング根拠を明示すること。
+・方式に依らず比較可能な形（CPU・メモリ・ストレージ容量・IOPS/レイテンシ・NW帯域）で記載すること。
+・収集値は参照情報であり、業務影響のない範囲で同等の方法で再計測・検証してよい。差異がある場合は根拠を添えて提示すること。</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s11">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s11')">
+        <span><span class="rfp-section-num">11</span><span class="rfp-section-title">成果物（例）</span></span>
+        <svg class="rfp-chevron" id="chv-s11" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s11">
+        <div class="rfp-body-text" style="margin-top:16px;">・基本設計書（仮想基盤／NW／バックアップ／監視／権限）
+・移行計画書（段階移行・リハ計画・本番計画・切戻し計画）
+・テスト計画書・結果報告書
+・運用設計書（定期作業一覧・障害対応フロー・連絡体制）
+・構成図・パラメータシート
+・教育資料（運用者向け）
+・移設計画書（現本店→新本店）、移設後の再試験計画・結果
+・現行環境データ消去関連成果物</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s12">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s12')">
+        <span><span class="rfp-section-num">12</span><span class="rfp-section-title">提案書の提出要領</span></span>
+        <svg class="rfp-chevron" id="chv-s12" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s12">
+        <div class="rfp-body-text" style="margin-top:16px;"><strong>12.1 提出手続き</strong>
+・<span class="rfp-highlight">提出期限：2026年4月17日</span>
+・提出方法：電子メール（当協会が指定する宛先。提出後、受領確認を返信する）
+・提案説明（プレゼン）：任意（実施する場合は当協会と個別に日程調整）
+・質疑応答：受付／回答とも電子メール
+　質疑受付期限：<span class="rfp-highlight">2026年4月10日</span>
+　回答：受付順に、遅くとも<span class="rfp-highlight">2026年4月14日</span>までに回答
+・選定結果通知：2026年4月24日頃
+
+<strong>12.2 秘密保持・情報管理</strong>
+・開示する現行環境情報は提案目的に限り使用。当協会の書面承諾なく第三者へ開示・提供・複製しないこと。
+・社内および再委託先を含め必要最小限の者にのみ情報を共有。同等の秘密保持義務を課すこと。
+
+<strong>12.3 提案書に含める事項</strong>
+・コスト：初期費用・年次費用・<span class="rfp-highlight">5年TCO（内訳必須）</span>。リース期間5年相当の総額が比較可能なよう「月額×60か月」等で提示。
+・サイジング：性能余裕（ピーク時想定・ボトルネック評価）と根拠
+・運用：運用体制（支援範囲・SLA・オンサイト／リモート）・更新管理・監視
+・運用操作性：VM運用の迅速性（追加・削除・リソース変更・ディスク割当拡張・スナップ／クローン）の手順と所要時間目安
+・拡張：将来増設時の費用・作業・停止影響
+・将来性：持ち出し方法・主要制約・手順概要・工数の考え方
+・移行：段階移行・停止時間・主要VMのリハ計画・RPA等の特有テスト観点・ロールバック・旧環境保持消去計画
+・移設：現本店→新本店（停止・手順・リスク・再試験）
+・データ消去：対象一覧・方式説明・実施報告・消去証明書
+・BCP：バックアップからのリストアにより48時間以内復旧の根拠</div>
+      </div>
+    </div>
+
+    <div class="rfp-section" id="sec-s13">
+      <div class="rfp-section-header" onclick="toggleRfpSection('s13')">
+        <span><span class="rfp-section-num">13</span><span class="rfp-section-title">評価観点</span></span>
+        <svg class="rfp-chevron" id="chv-s13" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-s13">
+        <div class="rfp-body-text" style="margin-top:16px;">・技術適合（運用利便性／可用性／拡張性／セキュリティ）
+・サイジング妥当性（根拠の明確さ、必要に応じた再計測・差異説明）
+・移行実現性（段階移行・停止影響・主要VMのリハ計画・ロールバック／旧環境保持）
+・運用性（監視・更新管理・支援体制・運用負荷）
+・コスト（リース5年相当の総額・5年TCO内訳）
+・将来性（次回更改容易性：持ち出し方法・主要制約の明確さ）
+・移設実現性（現本店→新本店）
+・情報漏えい対策（現行環境データ消去・証跡）
+・BCP復旧（バックアップからのリストアにより48時間以内復旧の根拠）</div>
+      </div>
+    </div>
+
+    <!-- VM List -->
+    <div class="rfp-section" id="sec-svm">
+      <div class="rfp-section-header" onclick="toggleRfpSection('svm')">
+        <span><span class="rfp-section-num">別紙</span><span class="rfp-section-title">移行対象VM一覧</span></span>
+        <svg class="rfp-chevron" id="chv-svm" width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </div>
+      <div class="rfp-section-body" id="body-svm">
+        <div style="margin-top:16px;">
+          <!-- VM search -->
+          <div class="search-bar" style="margin-bottom:12px;">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="currentColor" stroke-width="1.3"/><path d="M9.5 9.5L12 12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+            <input type="text" id="vm-search" placeholder="VM名・OS・役割で検索…" oninput="filterVMs()" style="padding-left:36px;font-size:13px;padding-top:8px;padding-bottom:8px;">
+          </div>
+          <div style="overflow-x:auto;">
+          <table class="vm-table" id="vm-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>名称・役割</th>
+                <th>OS</th>
+                <th>OS更改</th>
+                <th>RTO</th>
+                <th>RPO</th>
+                <th>vCPU</th>
+                <th>Mem(GB)</th>
+                <th>容量(GB)</th>
+                <th>区分</th>
+              </tr>
+            </thead>
+            <tbody id="vm-tbody"></tbody>
+          </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: PUBLIC Q&A
+     ============================================================ -->
+<div id="page-qa" class="page">
+  <div class="container">
+    <div class="page-heading">
+      <h1>Q&amp;A 公開</h1>
+      <p>ベンダーからの質問と回答を掲載しています。</p>
+    </div>
+
+    <div id="qa-stats-row" class="qa-stats"></div>
+
+    <div class="filter-tabs" id="qa-filter-tabs">
+      <button class="filter-chip active" onclick="filterQA('all', this)">すべて</button>
+      <button class="filter-chip" onclick="filterQA('answered', this)">回答済み</button>
+      <button class="filter-chip" onclick="filterQA('pending', this)">回答待ち</button>
+    </div>
+
+    <div id="qa-list"></div>
+  </div>
+</div>
+
+<!-- ============================================================
+     PAGE: ADMIN
+     ============================================================ -->
+<div id="page-admin" class="page">
+  <div class="container">
+
+    <!-- Login Panel -->
+    <div id="admin-login-panel">
+      <div class="page-heading">
+        <h1>管理者ログイン</h1>
+        <p>管理者専用ページです。</p>
+      </div>
+      <div class="admin-login">
+        <h2>管理者認証</h2>
+        <p>管理者パスワードを入力してください</p>
+        <div id="login-alert" class="alert alert-danger">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.5M8 11v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <div>パスワードが違います。</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">パスワード</label>
+          <input type="password" id="admin-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+        </div>
+        <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="adminLogin()">ログイン</button>
+        <p style="font-size:11px;color:var(--text-light);margin-top:12px;text-align:center;">初期パスワード: admin1234（設定から変更可）</p>
+      </div>
+    </div>
+
+    <!-- Admin Panel (shown after login) -->
+    <div id="admin-main-panel" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; padding-bottom:20px; border-bottom:1px solid var(--border);">
+        <div>
+          <h1 style="font-size:22px; font-weight:700; letter-spacing:-0.02em; margin-bottom:6px;">管理者パネル</h1>
+          <p style="font-size:13px; color:var(--text-muted); font-weight:300;">質問の管理と回答入力</p>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-secondary" onclick="showAdminTab('questions')" id="tab-questions" style="font-size:12px;padding:7px 14px;">質問管理</button>
+          <button class="btn btn-secondary" onclick="showAdminTab('settings')" id="tab-settings" style="font-size:12px;padding:7px 14px;">設定</button>
+          <button class="btn btn-secondary" onclick="adminLogout()" style="font-size:12px;padding:7px 14px;">ログアウト</button>
+        </div>
+      </div>
+
+      <!-- Questions Tab -->
+      <div id="admin-tab-questions">
+        <div class="admin-toolbar">
+          <div class="admin-count" id="admin-q-count"></div>
+          <div class="filter-row">
+            <select id="admin-filter" onchange="renderAdmin()">
+              <option value="all">すべて</option>
+              <option value="pending">未回答</option>
+              <option value="answered">回答済み</option>
+            </select>
+          </div>
+        </div>
+        <div id="admin-list"></div>
+      </div>
+
+      <!-- Settings Tab -->
+      <div id="admin-tab-settings" style="display:none;">
+        <div class="form-card" style="max-width:440px;">
+          <h3 style="font-size:15px; font-weight:500; margin-bottom:20px;">パスワード変更</h3>
+          <div class="form-group">
+            <label class="form-label">現在のパスワード</label>
+            <input type="password" id="pw-current" placeholder="現在のパスワード">
+          </div>
+          <div class="form-group">
+            <label class="form-label">新しいパスワード</label>
+            <input type="password" id="pw-new" placeholder="8文字以上">
+          </div>
+          <div class="form-group">
+            <label class="form-label">確認</label>
+            <input type="password" id="pw-confirm" placeholder="新しいパスワードを再入力">
+          </div>
+          <div id="pw-alert" class="alert" style="margin-top:12px;"></div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="changePassword()">変更する</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// =============================================
+// STORAGE (localStorage as persistent store)
+// =============================================
+const STORAGE_KEY = 'rfp_qa_data';
+const PW_KEY = 'rfp_admin_pw';
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : { questions: [] };
+  } catch(e) { return { questions: [] }; }
+}
+
+function saveData(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getPassword() {
+  return localStorage.getItem(PW_KEY) || 'admin1234';
+}
+
+function setPassword(pw) {
+  localStorage.setItem(PW_KEY, pw);
+}
+
+// =============================================
+// NAVIGATION
+// =============================================
+let adminLoggedIn = false;
+let currentQAFilter = 'all';
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (name === 'qa') renderQA();
+  if (name === 'admin') {
+    if (adminLoggedIn) {
+      document.getElementById('admin-login-panel').style.display = 'none';
+      document.getElementById('admin-main-panel').style.display = 'block';
+      renderAdmin();
+    } else {
+      document.getElementById('admin-login-panel').style.display = 'block';
+      document.getElementById('admin-main-panel').style.display = 'none';
+    }
+  }
+}
+
+// =============================================
+// FORM PAGE
+// =============================================
+function updateCount(inputId, countId, max) {
+  const val = document.getElementById(inputId).value.length;
+  document.getElementById(countId).textContent = val;
+  if (val > max * 0.9) document.getElementById(countId).style.color = '#E09000';
+  else document.getElementById(countId).style.color = '';
+}
+
+function clearForm() {
+  document.getElementById('q-name').value = '';
+  document.getElementById('q-category').value = '';
+  document.getElementById('q-body').value = '';
+  ['q-name-count','q-body-count'].forEach(id => document.getElementById(id).textContent = '0');
+  hideAlerts();
+}
+
+function hideAlerts() {
+  document.getElementById('form-alert-success').classList.remove('show');
+  document.getElementById('form-alert-error').classList.remove('show');
+}
+
+function submitQuestion() {
+  hideAlerts();
+  const name = document.getElementById('q-name').value.trim();
+  const body = document.getElementById('q-body').value.trim();
+  const category = document.getElementById('q-category').value;
+
+  if (!name) {
+    document.getElementById('form-error-msg').textContent = '質問者名を入力してください。';
+    document.getElementById('form-alert-error').classList.add('show');
+    document.getElementById('q-name').focus();
+    return;
+  }
+  if (!body) {
+    document.getElementById('form-error-msg').textContent = '質問内容を入力してください。';
+    document.getElementById('form-alert-error').classList.add('show');
+    document.getElementById('q-body').focus();
+    return;
+  }
+
+  const data = loadData();
+  const id = Date.now();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-')
+                  + ' ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
+
+  data.questions.push({
+    id,
+    name,
+    category: category || null,
+    body,
+    answer: null,
+    published: false,
+    date: dateStr,
+    answerDate: null
+  });
+
+  saveData(data);
+  clearForm();
+  document.getElementById('form-alert-success').classList.add('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// =============================================
+// Q&A PUBLIC PAGE
+// =============================================
+function renderQA() {
+  const data = loadData();
+  // 公開ページには「公開中 かつ 回答済み」のみ表示
+  const published = data.questions.filter(q => q.published && q.answer);
+
+  const categories = [...new Set(published.map(q => q.category).filter(Boolean))];
+
+  // Stats
+  document.getElementById('qa-stats-row').innerHTML = `
+    <div class="stat-pill"><strong>${published.length}</strong> 件公開中</div>
+  `;
+
+  // カテゴリフィルター生成
+  const tabsEl = document.getElementById('qa-filter-tabs');
+  const activeCat = tabsEl.dataset.cat || 'all';
+  tabsEl.innerHTML = `<button class="filter-chip ${activeCat==='all'?'active':''}" onclick="filterQA('all',this)">すべて</button>`
+    + categories.map(c => `<button class="filter-chip ${activeCat===c?'active':''}" onclick="filterQA('${escHtml(c)}',this)">${escHtml(c)}</button>`).join('');
+
+  let list = activeCat === 'all' ? published : published.filter(q => q.category === activeCat);
+
+  const container = document.getElementById('qa-list');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="qa-empty"><p>現在公開中のQ&Aはありません。</p></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map((q, i) => `
+    <div class="qa-item">
+      <div class="qa-question">
+        <div class="qa-q-label">Q</div>
+        <div class="qa-q-body">
+          <div class="qa-q-meta">
+            <span class="qa-number">#${String(i+1).padStart(3,'0')}</span>
+            ${q.category ? ` &nbsp;·&nbsp; ${escHtml(q.category)}` : ''}
+            &nbsp;·&nbsp; ${escHtml(q.date)}
+          </div>
+          <div class="qa-q-text">${escHtml(q.body)}</div>
+        </div>
+      </div>
+      <div class="qa-answer">
+        <div class="qa-a-label">A</div>
+        <div class="qa-a-text">${escHtml(q.answer)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterQA(type, btn) {
+  document.getElementById('qa-filter-tabs').dataset.cat = type;
+  renderQA();
+}
+
+// =============================================
+// ADMIN
+// =============================================
+function adminLogin() {
+  const pw = document.getElementById('admin-pw').value;
+  const alert = document.getElementById('login-alert');
+  if (pw === getPassword()) {
+    adminLoggedIn = true;
+    document.getElementById('admin-pw').value = '';
+    alert.classList.remove('show');
+    document.getElementById('admin-login-panel').style.display = 'none';
+    document.getElementById('admin-main-panel').style.display = 'block';
+    renderAdmin();
+  } else {
+    alert.classList.add('show');
+    document.getElementById('admin-pw').focus();
+  }
+}
+
+function adminLogout() {
+  adminLoggedIn = false;
+  document.getElementById('admin-login-panel').style.display = 'block';
+  document.getElementById('admin-main-panel').style.display = 'none';
+}
+
+function showAdminTab(tab) {
+  document.getElementById('admin-tab-questions').style.display = tab === 'questions' ? 'block' : 'none';
+  document.getElementById('admin-tab-settings').style.display = tab === 'settings' ? 'block' : 'none';
+  document.getElementById('tab-questions').style.background = tab === 'questions' ? 'var(--accent-light)' : '';
+  document.getElementById('tab-settings').style.background = tab === 'settings' ? 'var(--accent-light)' : '';
+}
+
+const CATEGORIES = ['要件・仕様','技術','納期・スケジュール','費用・契約','評価基準','その他'];
+
+function renderAdmin() {
+  const data = loadData();
+  const filter = document.getElementById('admin-filter').value;
+
+  let list = data.questions;
+  if (filter === 'pending') list = list.filter(q => !q.answer);
+  if (filter === 'answered') list = list.filter(q => !!q.answer);
+
+  document.getElementById('admin-q-count').innerHTML =
+    `全 <strong>${data.questions.length}</strong> 件 / 未回答 <strong>${data.questions.filter(q=>!q.answer).length}</strong> 件`;
+
+  const container = document.getElementById('admin-list');
+
+  if (list.length === 0) {
+    container.innerHTML = `<div class="qa-empty"><p>該当する質問はありません。</p></div>`;
+    return;
+  }
+
+  container.innerHTML = list.map((q, i) => {
+    const catOptions = CATEGORIES.map(c =>
+      `<option value="${escHtml(c)}" ${q.category===c?'selected':''}>${escHtml(c)}</option>`
+    ).join('');
+    return `
+    <div class="admin-item" id="item-${q.id}">
+      <div class="admin-item-header">
+        <div class="admin-item-header-left">
+          <div class="admin-item-meta">#${String(i+1).padStart(3,'0')} &nbsp;·&nbsp; ${escHtml(q.date)}</div>
+          <div id="view-${q.id}">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">${escHtml(q.name)}${q.category ? ' &nbsp;·&nbsp; ' + escHtml(q.category) : ''}</div>
+            <div class="admin-item-question">${escHtml(q.body)}</div>
+            <button class="btn btn-secondary" style="font-size:11px;padding:4px 10px;margin-top:8px;" onclick="toggleEditQ(${q.id})">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M8.5 1.5l2 2L3 11H1V9L8.5 1.5z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+              質問を編集
+            </button>
+          </div>
+          <div id="edit-${q.id}" style="display:none;margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border);">
+            <div style="display:flex;gap:8px;margin-bottom:8px;">
+              <div style="flex:1;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">質問者名</label>
+                <input type="text" id="eq-name-${q.id}" value="${escHtml(q.name)}" style="font-size:13px;padding:6px 10px;">
+              </div>
+              <div style="width:160px;">
+                <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">カテゴリ</label>
+                <select id="eq-cat-${q.id}" style="font-size:13px;padding:6px 28px 6px 10px;">
+                  <option value="">なし</option>
+                  ${catOptions}
+                </select>
+              </div>
+            </div>
+            <label style="font-size:11px;color:var(--text-muted);display:block;margin-bottom:4px;">質問内容</label>
+            <textarea id="eq-body-${q.id}" rows="4" style="font-size:13px;min-height:80px;">${escHtml(q.body)}</textarea>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-success" style="font-size:12px;padding:5px 14px;" onclick="saveQuestion(${q.id})">保存</button>
+              <button class="btn btn-secondary" style="font-size:12px;padding:5px 12px;" onclick="toggleEditQ(${q.id})">キャンセル</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0;">
+          <span class="status-badge ${q.answer ? 'badge-answered' : 'badge-pending'}">${q.answer ? '回答済' : '未回答'}</span>
+          ${q.answer ? `<span class="status-badge ${q.published ? 'badge-answered' : 'badge-hidden'}">${q.published ? '公開中' : '非公開'}</span>` : ''}
+        </div>
+      </div>
+      <div class="admin-answer-area ${q.answer ? 'has-answer' : ''}">
+        ${q.answer ? `<div class="existing-answer">${escHtml(q.answer)}</div>` : ''}
+        <div class="answer-form-row">
+          <textarea id="ans-${q.id}" placeholder="回答を入力…" rows="3">${q.answer ? escHtml(q.answer) : ''}</textarea>
+          <div class="answer-actions">
+            <button class="btn btn-success" onclick="saveAnswer(${q.id})">保存</button>
+            ${q.answer
+              ? `<button class="btn btn-secondary" style="font-size:12px;padding:6px 12px;" onclick="togglePublish(${q.id})">${q.published ? '非公開に' : '公開する'}</button>`
+              : ''}
+            <button class="btn btn-danger" onclick="deleteQuestion(${q.id})">削除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `}).join('');
+}
+
+function toggleEditQ(id) {
+  const view = document.getElementById('view-' + id);
+  const edit = document.getElementById('edit-' + id);
+  const isEditing = edit.style.display !== 'none';
+  view.style.display = isEditing ? 'block' : 'none';
+  edit.style.display = isEditing ? 'none' : 'block';
+  if (!isEditing) document.getElementById('eq-body-' + id).focus();
+}
+
+function saveQuestion(id) {
+  const name = document.getElementById('eq-name-' + id).value.trim();
+  const cat  = document.getElementById('eq-cat-'  + id).value;
+  const body = document.getElementById('eq-body-' + id).value.trim();
+  if (!name || !body) { showToast('質問者名と質問内容は必須です'); return; }
+  const data = loadData();
+  const q = data.questions.find(x => x.id === id);
+  if (!q) return;
+  q.name = name;
+  q.category = cat || null;
+  q.body = body;
+  saveData(data);
+  renderAdmin();
+  showToast('質問内容を更新しました');
+}
+
+function saveAnswer(id) {
+  const ansEl = document.getElementById('ans-' + id);
+  const ans = ansEl ? ansEl.value.trim() : '';
+  if (!ans) { showToast('回答を入力してください'); return; }
+
+  const data = loadData();
+  const q = data.questions.find(x => x.id === id);
+  if (!q) return;
+
+  const now = new Date();
+  q.answer = ans;
+  q.answerDate = now.toLocaleDateString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit' }).replace(/\//g, '-')
+                  + ' ' + now.toLocaleTimeString('ja-JP', { hour:'2-digit', minute:'2-digit' });
+
+  saveData(data);
+  renderAdmin();
+  showToast('回答を保存しました');
+}
+
+function togglePublish(id) {
+  const data = loadData();
+  const q = data.questions.find(x => x.id === id);
+  if (!q) return;
+  q.published = !q.published;
+  saveData(data);
+  renderAdmin();
+  showToast(q.published ? 'Q&Aに公開しました' : '非公開にしました');
+}
+
+function deleteQuestion(id) {
+  if (!confirm('この質問を削除しますか？')) return;
+  const data = loadData();
+  data.questions = data.questions.filter(x => x.id !== id);
+  saveData(data);
+  renderAdmin();
+  showToast('削除しました');
+}
+
+function changePassword() {
+  const cur = document.getElementById('pw-current').value;
+  const nw = document.getElementById('pw-new').value;
+  const conf = document.getElementById('pw-confirm').value;
+  const alertEl = document.getElementById('pw-alert');
+
+  alertEl.className = 'alert';
+
+  if (cur !== getPassword()) {
+    alertEl.className = 'alert alert-danger show';
+    alertEl.textContent = '現在のパスワードが違います。';
+    return;
+  }
+  if (nw.length < 8) {
+    alertEl.className = 'alert alert-danger show';
+    alertEl.textContent = '新しいパスワードは8文字以上にしてください。';
+    return;
+  }
+  if (nw !== conf) {
+    alertEl.className = 'alert alert-danger show';
+    alertEl.textContent = 'パスワードが一致しません。';
+    return;
+  }
+
+  setPassword(nw);
+  document.getElementById('pw-current').value = '';
+  document.getElementById('pw-new').value = '';
+  document.getElementById('pw-confirm').value = '';
+  alertEl.className = 'alert alert-success show';
+  alertEl.textContent = 'パスワードを変更しました。';
+}
+
+// =============================================
+// UTILS
+// =============================================
+function escHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+
+// =============================================
+// RFP PAGE
+// =============================================
+const VM_DATA = [
+  {id:'V94W9AD1', name:'ActiveDirectory-1号機', os:'Windows Server 2016', upgrade:'要', rto:'8h', rpo:'24h', cpu:1, mem:1.08, disk:28.39, sys:'情報系'},
+  {id:'V94W9AD2', name:'ActiveDirectory-2号機', os:'Windows Server 2016', upgrade:'要', rto:'8h', rpo:'24h', cpu:1, mem:0.64, disk:27.44, sys:'情報系'},
+  {id:'V81W3F80', name:'LogonDirector・生体認証', os:'Windows Server 2012', upgrade:'要', rto:'8h', rpo:'24h', cpu:2, mem:0.33, disk:18.40, sys:'情報系'},
+  {id:'V21W9KYO', name:'共有サーバ', os:'Windows Server 2019', upgrade:'不要', rto:'4h', rpo:'1h', cpu:2, mem:2.94, disk:12022.66, sys:'文書系'},
+  {id:'T834', name:'電算共有', os:'Windows Server 2019', upgrade:'不要', rto:'4h', rpo:'1h', cpu:2, mem:0.60, disk:1023.76, sys:'文書系'},
+  {id:'V94W9SBZ', name:'サイボウズ', os:'Windows Server 2016', upgrade:'要', rto:'4h', rpo:'1h', cpu:1, mem:1.09, disk:359.52, sys:'情報系'},
+  {id:'V33FLBLG', name:'FileBlog・エンタープライズサーチ', os:'Windows Server 2022', upgrade:'不要', rto:'8h', rpo:'24h', cpu:6, mem:5.48, disk:256.61, sys:'情報系'},
+  {id:'VW22SCBFLW', name:'Collaboflow・電子稟議決裁', os:'Windows Server 2022', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:0.60, disk:34.06, sys:'文書系'},
+  {id:'V12W9SKY', name:'SKYSEA・資産管理', os:'Windows Server 2016', upgrade:'要', rto:'8h', rpo:'24h', cpu:2, mem:1.01, disk:324.90, sys:'情報系'},
+  {id:'P25W3EB0', name:'統計', os:'Windows Server 2019', upgrade:'不要', rto:'8h', rpo:'24h', cpu:3, mem:2.44, disk:969.80, sys:'文書系'},
+  {id:'PRSV', name:'プリントサーバ', os:'Windows Server 2019', upgrade:'不要', rto:'8h', rpo:'24h', cpu:1, mem:0.79, disk:29.46, sys:'文書系'},
+  {id:'T835', name:'Ridoc SmartNavigator', os:'Windows Server 2019', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.16, disk:3910.35, sys:'文書系'},
+  {id:'T836', name:'Ridoc GlobalScan-1号機', os:'Windows Server 2019', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.59, disk:46.22, sys:'文書系'},
+  {id:'T837', name:'Ridoc GlobalScan-2号機', os:'Windows Server 2019', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.60, disk:64.02, sys:'文書系'},
+  {id:'V11W9ZIM', name:'財務・決算書OCR', os:'Windows Server 2016', upgrade:'要', rto:'8h', rpo:'24h', cpu:2, mem:1.01, disk:313.40, sys:'情報系'},
+  {id:'V94W9INK', name:'印影・印鑑照合', os:'Windows Server 2016', upgrade:'要', rto:'8h', rpo:'24h', cpu:4, mem:0.40, disk:500.02, sys:'情報系'},
+  {id:'V25ROBO1', name:'UiPath-1号機・developer', os:'Windows 10', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.75, disk:85.24, sys:'情報系'},
+  {id:'V25ROBO3', name:'UiPath-3号機・developer', os:'Windows 10', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.23, disk:54.51, sys:'文書系'},
+  {id:'VMROBO05', name:'UiPath-5号機・developer', os:'Windows 11', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:4.12, disk:65.76, sys:'文書系'},
+  {id:'VMROBO06', name:'UiPath-6号機・Robot', os:'Windows 11', upgrade:'不要', rto:'8h', rpo:'24h', cpu:2, mem:1.96, disk:59.12, sys:'文書系'},
+  {id:'（現NAS）', name:'移動プロファイル＆フォルダリダイレクト', os:'—', upgrade:'—', rto:'4h', rpo:'1h', cpu:'—', mem:'—', disk:2910.00, sys:'—'},
+];
+
+function renderVMTable(data) {
+  document.getElementById('vm-tbody').innerHTML = data.map(v => `
+    <tr class="${v.sys==='情報系'?'sys-info':v.sys==='文書系'?'sys-doc':''}">
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;">${escHtml(v.id)}</td>
+      <td style="min-width:160px;">${escHtml(v.name)}</td>
+      <td style="white-space:nowrap;font-size:12px;">${escHtml(v.os)}</td>
+      <td class="${v.upgrade==='要'?'flag-yes':'flag-no'}" style="text-align:center;">${escHtml(String(v.upgrade))}</td>
+      <td style="text-align:center;font-weight:${v.rto==='4h'?'500':'400'};color:${v.rto==='4h'?'var(--danger)':'inherit'}">${escHtml(v.rto)}</td>
+      <td style="text-align:center;font-weight:${v.rpo==='1h'?'500':'400'};color:${v.rpo==='1h'?'var(--danger)':'inherit'}">${escHtml(String(v.rpo))}</td>
+      <td style="text-align:center;">${escHtml(String(v.cpu))}</td>
+      <td style="text-align:right;">${typeof v.mem==='number'?v.mem.toFixed(2):v.mem}</td>
+      <td style="text-align:right;">${typeof v.disk==='number'?v.disk.toLocaleString('ja-JP',{maximumFractionDigits:2}):v.disk}</td>
+      <td><span style="font-size:11px;padding:2px 8px;border-radius:3px;background:${v.sys==='情報系'?'#DBEAFE':v.sys==='文書系'?'#DCFCE7':'var(--tag-bg)'};color:${v.sys==='情報系'?'#1E40AF':v.sys==='文書系'?'#166534':'var(--text-muted)'};">${escHtml(v.sys)}</span></td>
+    </tr>
+  `).join('');
+}
+
+function filterVMs() {
+  const q = document.getElementById('vm-search').value.toLowerCase();
+  const filtered = q ? VM_DATA.filter(v =>
+    v.id.toLowerCase().includes(q) ||
+    v.name.toLowerCase().includes(q) ||
+    v.os.toLowerCase().includes(q) ||
+    v.sys.toLowerCase().includes(q)
+  ) : VM_DATA;
+  renderVMTable(filtered);
+}
+
+function toggleRfpSection(id) {
+  const body = document.getElementById('body-' + id);
+  const chv  = document.getElementById('chv-'  + id);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chv.classList.toggle('open', !isOpen);
+}
+
+function openRfpSection(id) {
+  const body = document.getElementById('body-' + id);
+  const chv  = document.getElementById('chv-'  + id);
+  body.classList.add('open');
+  chv.classList.add('open');
+  document.getElementById('sec-' + id).scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderVMTable(VM_DATA);
+  if (location.hash === '#qa') showPage('qa');
+});
+
+</script>
+</body>
+</html>
